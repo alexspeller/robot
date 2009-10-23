@@ -15,9 +15,10 @@
 require 'rubygems'
 require 'sinatra'
 require 'dm-core'
-require 'net/http'
+require 'json'
+# require 'wavey'
 
-Net::HTTP
+# include Wavey::Mixins::DataFormat
 
 # Configure DataMapper to use the App Engine datastore 
 DataMapper.setup(:default, "appengine://auto")
@@ -62,5 +63,18 @@ EOF
 end
 
 get '/_wave/robot/jsonrpc' do
+  body = request.env["rack.input"].read
+  context, events = parse_json_body(body)
+
+  wavelet = context.wavelets[0]
+  blip = context.GetBlipById(wavelet.GetRootBlipId())
+  blip.GetDocument.SetText('Only I get to edit the top blip!')
+
+  context.to_json
+            # events.each do |event|
+            #   handle_event(event, context)
+            # end
+            # [ 200, { 'Content-Type' => 'application/json' }, context.to_json ]
+
 
 end
