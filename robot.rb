@@ -15,10 +15,11 @@
 require 'rubygems'
 require 'sinatra'
 require 'dm-core'
-require 'json'
-# require 'wavey'
+require 'json/pure'
 
-# include Wavey::Mixins::DataFormat
+require 'wavey'
+
+include Wavey::Mixins::DataFormat
 
 # Configure DataMapper to use the App Engine datastore 
 DataMapper.setup(:default, "appengine://auto")
@@ -62,19 +63,25 @@ get '/_wave/capabilities.xml' do
 EOF
 end
 
-get '/_wave/robot/jsonrpc' do
-  body = request.env["rack.input"].read
-  context, events = parse_json_body(body)
+get '/test' do
+   body = %{{"blips":{"map":{"b+mVxsqBYWB":{"lastModifiedTime":1256313401284,"contributors":{"javaClass":"java.util.ArrayList","list":["alexspeller@googlewave.com"]},"waveletId":"googlewave.com!conv+root","waveId":"googlewave.com!w+mVxsqBYWA","parentBlipId":null,"version":24,"creator":"alexspeller@googlewave.com","content":"Thiis a test wae","blipId":"b+mVxsqBYWB","javaClass":"com.google.wave.api.impl.BlipData","annotations":{"javaClass":"java.util.ArrayList","list":[{"range":{"start":-1,"javaClass":"com.google.wave.api.Range","end":16},"name":"conv/title","value":"","javaClass":"com.google.wave.api.Annotation"},{"range":{"start":-1,"javaClass":"com.google.wave.api.Range","end":16},"name":"lang","value":"unknown","javaClass":"com.google.wave.api.Annotation"}]},"elements":{"map":{},"javaClass":"java.util.HashMap"},"childBlipIds":{"javaClass":"java.util.ArrayList","list":[]}}},"javaClass":"java.util.HashMap"},"robotAddress":"naturehackday@appspot.com","events":{"javaClass":"java.util.ArrayList","list":[{"timestamp":1256313401522,"modifiedBy":"alexspeller@googlewave.com","javaClass":"com.google.wave.api.impl.EventData","properties":{"map":{"blipId":"b+mVxsqBYWB"},"javaClass":"java.util.HashMap"},"type":"DOCUMENT_CHANGED"}]},"wavelet":{"lastModifiedTime":1256313401522,"title":"Thiis a test wae","waveletId":"googlewave.com!conv+root","rootBlipId":"b+mVxsqBYWB","javaClass":"com.google.wave.api.impl.WaveletData","dataDocuments":{"map":{},"javaClass":"java.util.HashMap"},"creationTime":1256313389244,"waveId":"googlewave.com!w+mVxsqBYWA","participants":{"javaClass":"java.util.ArrayList","list":["alexspeller@googlewave.com","naturehackday@appspot.com"]},"creator":"alexspeller@googlewave.com","version":25}}}
 
-  wavelet = context.wavelets[0]
-  blip = context.GetBlipById(wavelet.GetRootBlipId())
-  blip.GetDocument.SetText('Only I get to edit the top blip!')
+  do_wave_stuff(body)
+end
 
+def do_wave_stuff(json_string)
+  context, events = parse_json_body(json_string)
+  wavelet = context.wavelets.to_a.first[1]
+  # raise [wavelet.root_blip_id, context.blips.inspect].inspect
+  blip = context.blips[wavelet.root_blip_id]
+  blip.set_text("Only I get to edit the top blip!")
+  
   context.to_json
-            # events.each do |event|
-            #   handle_event(event, context)
-            # end
-            # [ 200, { 'Content-Type' => 'application/json' }, context.to_json ]
+end
 
+post '/_wave/robot/jsonrpc' do
+  body = request.env["rack.input"].read
 
+  do_wave_stuff(body)  
+  
 end
