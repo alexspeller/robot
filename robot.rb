@@ -17,6 +17,12 @@ require 'sinatra'
 require 'dm-core'
 require 'json/pure'
 
+require 'cgi'
+require 'open-uri'
+require 'rexml/document'
+# require 'appengine-apis/urlfetch'
+
+
 require 'wavey'
 
 include Wavey::Mixins::DataFormat
@@ -69,8 +75,20 @@ get '/test' do
   do_wave_stuff(body)
 end
 
+get '/rexml' do
+  out = []
+  doc = REXML::Document.new(open("http://www.w3.org/"))
+
+  doc.elements.each("//a") do |link|  
+    out << link.attributes['href']
+  end
+
+  out.join "<br/>"
+end
+
 def do_wave_stuff(json_string)
   context, events = parse_json_body(json_string)
+  
   wavelet = context.wavelets.to_a.first[1]
   # raise [wavelet.root_blip_id, context.blips.inspect].inspect
   blip = context.blips[wavelet.root_blip_id]
